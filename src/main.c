@@ -140,8 +140,28 @@ typedef enum TokenKind{
 	TOKEN_FLOAT,
 	TOKEN_STR,
 	TOKEN_NAME,
-	
-	//...
+	TOKEN_LSHIFT,
+	TOKEN_RSHIFT,
+	TOKEN_EQ,
+	TOKEN_NOTEQ,
+	TOKEN_LTEQ,
+	TOKEN_GTEQ,
+	TOKEN_AND,
+	TOKEN_OR,
+
+	TOKEN_COLON_ASSIGN,
+	TOKEN_ADD_ASSIGN,
+	TOKEN_SUB_ASSIGN,
+	TOKEN_AND_ASSIGN,
+	TOKEN_OR_ASSIGN,
+	TOKEN_XOR_ASSIGN,
+	TOKEN_LSHIFT_ASSIGN,
+	TOKEN_RSHIFT_ASSIGN,
+	TOKEN_MUL_ASSIGN,
+	TOKEN_DIV_ASSIGN,
+	TOKEN_MOD_ASSIGN,
+	TOKEN_INC,
+	TOKEN_DEC,
 } TokenKind;
 
 typedef enum TokenMod{
@@ -242,11 +262,14 @@ void scan_int(){
 		if(tolower(*stream)=='x'){ // hexadecimal
 			stream++;
 			base  = 16;
+			token.mod = TOKENMOD_HEX;
 		}else if(tolower(*stream)=='b'){ //binary
 			stream++;
 			base = 2;
+			token.mod = TOKENMOD_BIN;
 		}else if(isdigit(*stream)){
 			base = 8;
+			token.mod = TOKENMOD_OCT;
 		}
 	}
 	uint64_t val = 0;
@@ -379,6 +402,25 @@ void scan_str(){
 	token.str_val = str;
 }
 
+#define CASE1(c,c1,k1) \
+	case c:	\
+			token.kind = *stream++;	\
+			if(*stream==c1){	\
+				token.kind = k1;	\
+				stream++;	\
+			}	\
+			break;
+#define CASE2(c,c1,k1,c2,k2) \
+	case c:	\
+			token.kind = *stream++;	\
+			if(*stream==c1){	\
+				token.kind = k1;	\
+				stream++;	\
+			}else if(*stream==c2){	\
+				token.kind = k2;	\
+				stream++;	\
+			}	\
+			break;
 void next_token(){
 top:
 	token.start = stream;
@@ -403,11 +445,11 @@ top:
 			while(isdigit(*stream)){
 				stream++;
 			}
-			if(*stream=='.' || tolower(*stream)=='e'){
-				stream = token.start;
+			char c = *stream;
+			stream = token.start;
+			if(c=='.' || tolower(c)=='e'){
 				scan_float();
 			}else{
-				stream = token.start;
 				scan_int();
 			}
 			break;
@@ -417,19 +459,61 @@ top:
 		case 'u':	case 'v':	case 'w':	case 'x':	case 'y':	case 'z':	
 		case 'A':	case 'B':	case 'C':	case 'D':	case 'E':	case 'F':	case 'G':	case 'H':	case 'I':	case 'J':	
 		case 'K':	case 'L':	case 'M':	case 'N':	case 'O':	case 'P':	case 'Q':	case 'R':	case 'S':	case 'T':	
-		case 'U':	case 'V':	case 'W':	case 'X':	case 'Y':	case 'Z':	case '_':
+		case 'U':	case 'V':	case 'W':	case 'X':	case 'Y':	case 'Z':	
+		case '_':
 			while(isalnum(*stream) || *stream == '_'){
 				stream++;
 			} 
 			token.kind = TOKEN_NAME;
 			token.name = str_intern_range(token.start, stream);
 			break;
+		case '<':
+			token.kind = *stream++;
+			if(*stream=='<'){
+				token.kind = TOKEN_LSHIFT;
+				stream++;
+				if(*stream=='='){
+					token.kind = TOKEN_LSHIFT_ASSIGN;
+					stream++;
+				}
+			}else if(*stream == '='){
+				token.kind = TOKEN_LTEQ;
+				stream++;
+			}
+			break;
+		case '>':
+			token.kind = *stream++;
+			if(*stream=='>'){
+				token.kind = TOKEN_RSHIFT;
+				stream++;
+				if(*stream=='='){
+					token.kind = TOKEN_RSHIFT_ASSIGN;
+					stream++;
+				}
+			}else if(*stream == '='){
+				token.kind = TOKEN_GTEQ;
+				stream++;
+			}
+			break;
+		CASE1(':','=',TOKEN_COLON_ASSIGN)
+		CASE1('/','=',TOKEN_DIV_ASSIGN)
+		CASE1('*','=',TOKEN_MUL_ASSIGN)
+		CASE1('%','=',TOKEN_MOD_ASSIGN)
+		CASE1('^','=',TOKEN_XOR_ASSIGN)
+	
+		CASE2('+','=',TOKEN_ADD_ASSIGN,'+',TOKEN_INC)
+		CASE2('-','=',TOKEN_SUB_ASSIGN,'-',TOKEN_DEC)
+		CASE2('&','=',TOKEN_AND_ASSIGN,'&',TOKEN_AND)
+		CASE2('|','=',TOKEN_OR_ASSIGN,'|',TOKEN_OR)
 		default:
 			token.kind = *stream++;
 			break;
 	}
 	token.end = stream;
 }
+#undef CASE2
+#undef CASE1
+
 
 
 void init_stream(const char *str){
@@ -637,6 +721,25 @@ void lex_test(){
 	assert_token_eof();
 	init_stream("\"a\\nb\"");
 	assert_token_str("a\nb");
+	assert_token_eof();
+
+	//Operator  tests
+	init_stream("+ : := ++ -- += -= < > <= << >> >= <<= >>=");
+	assert_token('+');
+	assert_token(':');
+	assert_token(TOKEN_COLON_ASSIGN);
+	assert_token(TOKEN_INC);
+	assert_token(TOKEN_DEC);
+	assert_token(TOKEN_ADD_ASSIGN);
+	assert_token(TOKEN_SUB_ASSIGN);
+	assert_token('<');
+	assert_token('>');
+	assert_token(TOKEN_LTEQ);
+	assert_token(TOKEN_LSHIFT);
+	assert_token(TOKEN_RSHIFT);
+	assert_token(TOKEN_GTEQ);
+	assert_token(TOKEN_LSHIFT_ASSIGN);
+	assert_token(TOKEN_RSHIFT_ASSIGN);
 	assert_token_eof();
 
 
