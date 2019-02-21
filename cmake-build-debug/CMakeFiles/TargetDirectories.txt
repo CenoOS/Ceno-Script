@@ -1,0 +1,3 @@
+/Users/neroyang/project/Ceno-Script/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/Users/neroyang/project/Ceno-Script/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/neroyang/project/Ceno-Script/cmake-build-debug/CMakeFiles/Ceno_Script.dir
