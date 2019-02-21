@@ -215,16 +215,6 @@ typedef struct Token{
 Token token;
 const char* stream;
 
-const char *keyword_if;
-const char *keyword_for;
-const char *keyword_while;
-
-void init_keyword(){
-	keyword_if 		= str_intern("if");
-	keyword_for 	= str_intern("for");
-	keyword_while	= str_intern("while");
-}
-
 uint8_t char_to_digit[256] = {
 	['0'] = 0,
 	['1'] = 1,
@@ -257,9 +247,6 @@ void scan_int(){
 			base = 2;
 		}else if(isdigit(*stream)){
 			base = 8;
-		}else{
-			syntax_error("Invalid integer literal suffix '%c'",*stream);
-			stream++;
 		}
 	}
 	uint64_t val = 0;
@@ -606,7 +593,8 @@ void lex_test(){
 	assert_token_int(0b0101);
 	assert_token_eof();
 
-	init_stream("2342352352 0xffff 042 0b1111");
+	init_stream("0 2342352352 0xffff 042 0b1111");
+	assert_token_int(0);
 	assert_token_int(2342352352ull);
 	assert_token_int(0xffffull);
 	assert_token_int(042);
