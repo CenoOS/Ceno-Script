@@ -759,6 +759,8 @@ void lex_test(){
 }
 
 #undef assert_token_eof
+#undef assert_token_str
+#undef assert_token_float
 #undef assert_token_int
 #undef assert_token_name
 #undef assert_token
