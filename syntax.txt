@@ -109,15 +109,17 @@ stmt = 'return' expr
 		| 'switch' '(' expr ')' switch_block
 		| expr (INC | DEC | assign_op expr)?
 
-
+type_spec = NAME | '(' ':' type ')'
 
 operand_expr = NAME
 				|  INT
 				| FLOAT 
 				| STR
-				| NAME ('{' expr_list '}')?
+				| CAST '(' type ')' expr
 				| '(' expr ')'
-				| '{' expr_list '}'
+				| type_spec? '{' expr_list '}'
+
+
 
 
 base_expr = operand_expr ('(' expr_list ')' | '[' expr ']' | '.' NAME)*
