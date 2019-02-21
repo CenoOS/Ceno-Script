@@ -131,3 +131,8 @@ void str_intern_test(){
 	assert(str_intern(z) != str_intern(y));
 
 }
+
+void common_test(){
+	buf_test();
+	str_intern_test();
+}

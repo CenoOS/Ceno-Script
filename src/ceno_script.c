@@ -1,10 +1,10 @@
 #include "common.c"
 #include "lexer.c"
+#include "parser.c"
 
 void run_test(){
-	buf_test();
+	common_test();
 	lex_test();
-	str_intern_test();
 	parse_test();
 }
 
