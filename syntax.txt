@@ -49,3 +49,62 @@ INT = [1-9][0-9]* | 0[xX][0-9a-fA-F]+ | 0[0-7]+ | 0[0bB][0-1]+
 FLOAT = [0-9]*[.][0-9]*([eE][+-]?[0-9]+)?
 CHAR = '\'' . '\''
 STR = '"' [^"]* '"'
+
+
+
+EBNF grammer:
+
+type_list = type (',' type)*
+name_list = NAME (',' NAME)*
+
+base_type = NAME
+			| 'func' '(' type_list? ')' (':' type)?
+			| '(' base_type ')'
+
+type = base_type ('[' expr ']' | '*')*
+
+enum_item = NAME ('=' expr)?
+enum_items = enum_item (',' enum_item)* ','?
+enum_decl = NAME '{' enum_items? '}'
+
+
+aggregate_field = name_list ':' type
+aggregate_decl = NAME '{' (aggregate_field ';')* '}'
+
+var_decl = NAME '=' expr 
+			| NAME ':' type ('=' expr)?
+
+const_decl = NAME '=' expr
+
+typedef_decl = NAME '=' type
+
+func_param = NAME ':' type
+func_param_list = func_param (',' func_param)*
+func_decl = NAME '(' func_param_list?  ')' (':' type)? '{' stmt_block '}'
+
+
+decl	='enum' enum_decl
+		|'struct' aggregate_decl
+		|'union' aggregate_decl
+		|'var' var_decl
+		|'const' const_decl
+		|'typedef' typedef_decl
+		|'func' func_decl
+
+Statements:
+
+assign_op = '=' | COLON_ASSIGN | ADD_ASSIGN |....
+
+switch_case = (CASE expr | DEFAULT) ':' stmt*
+switch_block = '{' switch_case* '}'
+
+stmt = 'return' expr
+		| 'if' '(' expr ')' stmt_block ('else' 'if' '(' expr ')' stmt_block)* ('else' stmt_block)?
+		| 'while' '(' expr ')' stmt_block
+		| 'for' '(' stmt_list ';' expr ';' stmt_list ')' stmt_block
+		| 'do' stmt_block 'while' '(' expr ')' ';'
+		| 'break' ';'
+		| 'continue' ';'
+		| '{' stmt* '}'
+		| 'switch' '(' expr ')' switch_block
+		| expr (INC | DEC | assign_op expr)?
