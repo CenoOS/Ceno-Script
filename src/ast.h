@@ -156,9 +156,10 @@ typedef struct IfStmt{ // else if .... else
 } IfStmt;
 
 typedef struct WhileStmt{
-	Expr *expr;
-	Stmt *block;
+	Expr *cond;
+	StmtBlock *block;
 } WhileStmt;
+
 
 typedef	struct ForStmt{ // for
 	Stmt *init;
@@ -229,6 +230,7 @@ typedef struct FuncDecl{
 	FuncParam *params;
 	size_t num_params;
 	TypeSpec *return_type;
+	 StmtBlock block;
 } FuncDecl;
 
 typedef struct EnumItem{
@@ -237,8 +239,8 @@ typedef struct EnumItem{
 } EnumItem;
 
 typedef struct EnumDecl {
-		EnumItem *items;
-		size_t num_items;	
+	EnumItem *items;
+	size_t num_items;	
 } EnumDecl;
 
 typedef struct AggregateItem{
