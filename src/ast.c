@@ -81,6 +81,36 @@ struct TypeSpec{
 	};
 };
 
+TypeSpec *typespec_alloc(TypeSpecKind kind){
+	TypeSpec *type = xcalloc(1,sizeof(TypeSpec));
+	type->kind = kind;
+	return type;
+}
+
+TypeSpec *typespec_name(const char* name){
+	TypeSpec *type = typespec_alloc(TYPESPEC_NAME);
+	type->name = name;
+	return type;
+} 
+
+TypeSpec *typespec_pointer(TypeSpec *base){
+	TypeSpec *type = typespec_alloc(TYPESPEC_POINTER);
+	type->base = base;
+	return type;
+} 
+
+TypeSpec *typespec_func(FuncTypeSpec func){
+	TypeSpec *type = typespec_alloc(TYPESPEC_FUNC);
+	type->func = func;
+	return type;
+} 
+
+TypeSpec *typespec_array(TypeSpec *base, Expr *size){
+	TypeSpec *type = typespec_alloc(TYPESPEC_ARRAY);
+	type->base = base;
+	type->size = size;
+	return type;
+} 
 
 typedef enum StmtKind{
 	STMT_NONE,
@@ -342,7 +372,9 @@ void expr_test(){
 		expr_ternary(expr_name("flag"),expr_str("true"),expr_str("false")),
 		expr_field(expr_name("person"),"name"),
 		expr_call(expr_name("face"),fact_args),
-		expr_index(expr_field(expr_name("person"),"age"),expr_int(4))
+		expr_index(expr_field(expr_name("person"),"age"),expr_int(4)),
+		expr_cast(typespec_name("int_ptr"),expr_name("void_ptr")),
+		expr_cast(typespec_pointer(typespec_name("int")),expr_name("void_ptr")),
 	};
 	for(Expr **it = exprs; it != exprs + sizeof(exprs)/sizeof(*exprs); it++){
 		print_expr_line(*it);
