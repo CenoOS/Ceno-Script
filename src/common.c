@@ -1,6 +1,15 @@
 #define MAX(x, y)	((x)>=(y) ? (x) : (y))
 
 
+void *xcalloc(size_t num_items, size_t  item_size){
+	void *ptr = calloc(num_items, item_size); 
+	if(!ptr){
+		perror("xcalloc failed");
+		exit(1);
+	}
+	return ptr;
+}
+
 void *xrealloc(void *ptr, size_t num_bytes){
 	ptr = realloc(ptr, num_bytes); 
 	if(!ptr){
@@ -42,13 +51,15 @@ typedef struct BufHdr{
 	char buf[0];
 } BufHdr;
 
-#define BUF(x)
+#define BUF(x) x
 #define buf__hdr(b)	((BufHdr *)((char *)b - offsetof(BufHdr, buf)))
 #define buf__fits(b, n)	(buf_len(b)+(n)<=buf_cap(b))
 #define buf__fit(b, n)	(buf__fits((b), (n)) ? 0 : ((b) = buf__grow((b), buf_len(b)+(n), sizeof(*(b)))))
 
 #define buf_len(b)	((b) ? buf__hdr(b)->len : 0)
 #define buf_cap(b)	((b) ? buf__hdr(b)->cap : 0)
+#define buf_end(b)	((b) + buf_len(b))
+
 #define buf_push(b, x)	(buf__fit(b, 1), (b)[buf__hdr(b)->len++] = (x))
 #define buf_free(b)	((b) ? (free(buf__hdr(b)), (b) = NULL) : 0)
 
