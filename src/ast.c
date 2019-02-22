@@ -30,7 +30,8 @@ struct Expr{
 		const char *name;
 		struct {	// Compound literals
 			TypeSpec *compound_type;
-			BUF(Expr **compound_args);
+			size_t num_compound_args;
+			Expr **compound_args;
 		};
 		struct { // Cast
 			TypeSpec *cast_type;
@@ -39,7 +40,10 @@ struct Expr{
 		struct { // Unary
 			Expr *operand;
 			struct{ // Call
-				BUF(Expr **args);
+				struct{
+					size_t num_args;
+					Expr **args;
+				};
 				Expr *index;
 				const char *field;
 			};
@@ -65,7 +69,8 @@ typedef enum TypeSpecKind{
 } TypeSpecKind;
 
 typedef struct FuncTypeSpec{
-	BUF(TypeSpec **args);
+	size_t num_args;
+	TypeSpec **args;
 	TypeSpec *ret;
 } FuncTypeSpec;
 
@@ -129,7 +134,8 @@ typedef enum StmtKind{
 }StmtKind;
 
 typedef struct StmtBlock {
-	BUF(Stmt **stmts);
+	size_t num_stmts;
+	Stmt **stmts;
 } StmtBlock;
 
 typedef struct ElseIf {
@@ -138,7 +144,8 @@ typedef struct ElseIf {
 } ElseIf;
 
 typedef struct Case {
-	BUF(Expr **exprs);
+	size_t num_exprs;
+	Expr **exprs;
 	StmtBlock block;
 } Case;
 
@@ -149,7 +156,8 @@ struct Stmt{
 	Stmt *block;
 	union {
 		struct { // else if .... else
-			BUF(ElseIf *elseifs);
+			size_t num_elseifs;
+			ElseIf *elseifs;
 			StmtBlock else_block;
 		};
 		struct { // for
@@ -157,7 +165,8 @@ struct Stmt{
 			StmtBlock for_next_block;
 		};
 		struct { // case
-			BUF(Case *cases);
+			size_t num_cases;
+			Case *cases;
 		};
 		struct { // auto assign
 			const char *var_name;
@@ -206,9 +215,10 @@ Expr *expr_cast(TypeSpec* type, Expr *expr){
 	return new_expr;
 }
 
-Expr *expr_call(Expr *operand, Expr **args){
+Expr *expr_call(Expr *operand,size_t num_args, Expr **args){
 	Expr *expr = expr_alloc(EXPR_CALL);
 	expr->operand = operand;
+	expr->num_args =num_args;
 	expr->args = args;
 	return expr;
 }
@@ -258,7 +268,7 @@ void print_type(TypeSpec *type){
 		case TYPESPEC_FUNC:{
 			FuncTypeSpec func = type->func;
 			printf("(func ");
-			for(TypeSpec **it = func.args; it!=buf_end(func.args); it++){
+			for(TypeSpec **it = func.args; it!=func.args+func.num_args; it++){
 				printf(" ");
 				print_type(*it);
 			}
@@ -308,7 +318,7 @@ void print_expr(Expr* expr){
 		case EXPR_CALL:{
 			printf("(");
 			print_expr(expr->operand);
-			for(Expr **it = expr->args; it!=buf_end(expr->args); it++){
+			for(Expr **it = expr->args; it!=expr->args+expr->num_args; it++){
 				printf(" ");
 				print_expr(*it);
 			}
@@ -363,15 +373,14 @@ void print_expr_line(Expr *expr){
 }
 
 void expr_test(){
-	Expr **fact_args = NULL;
-	buf_push(fact_args,expr_int(64));
+
 	Expr *exprs[] = {
 		expr_int(64),
 		expr_binary('+',expr_int(1),expr_int(2)),
 		expr_unary('-',expr_float(3.1415926)),
 		expr_ternary(expr_name("flag"),expr_str("true"),expr_str("false")),
 		expr_field(expr_name("person"),"name"),
-		expr_call(expr_name("face"),fact_args),
+		expr_call(expr_name("face"),1,&(Expr*[]){expr_int(64)}),
 		expr_index(expr_field(expr_name("person"),"age"),expr_int(4)),
 		expr_cast(typespec_name("int_ptr"),expr_name("void_ptr")),
 		expr_cast(typespec_pointer(typespec_name("int")),expr_name("void_ptr")),
@@ -399,7 +408,8 @@ typedef struct EnumItem{
 } EnumItem;
 
 typedef struct AggregateItem{
-	BUF(const char **name);
+	const char **name;
+	size_t num_names;
 	TypeSpec *type;
 } AggregateItem;
 
@@ -409,7 +419,8 @@ typedef struct FuncParam{
 } FuncParam;
 
 typedef struct FuncDecl{
-	BUF(FuncParam *params);
+	FuncParam *params;
+	size_t num_params;
 	TypeSpec *return_type;
 } FuncDecl;
 
@@ -418,8 +429,14 @@ typedef struct Decl{
 	const char *name;
 	union{
 		struct{
-			BUF(EnumItem *items);
-			BUF(AggregateItem *aggregate_items);
+			struct{
+				EnumItem *items;
+				size_t num_enum_items;
+			};
+			struct{
+				AggregateItem *aggregate_items;
+				size_t num_aggregate_items;
+			};
 			struct{
 				TypeSpec *type;
 				Expr *expr;
