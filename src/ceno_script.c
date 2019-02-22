@@ -12,10 +12,11 @@
 #include <inttypes.h>
 #include "common.c"
 #include "lexer.c"
+#include "ast.h"
 #include "ast.c"
 #include "parser.c"
 
-void run_test(){
+void main_test(){
 	common_test();
 	lex_test();
 	ast_test();
@@ -23,6 +24,6 @@ void run_test(){
 }
 
 int main(){
-	run_test();
+	main_test();
 	return 0;
 }
