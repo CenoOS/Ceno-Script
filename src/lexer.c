@@ -410,6 +410,8 @@ void init_stream(const char *str){
 	stream = str;
 	next_token();
 }
+
+
 void print_token(Token token){
 	switch(token.kind){
 		case TOKEN_INT:
@@ -454,116 +456,3 @@ bool expect_token(TokenKind kind){
 		return false;
 	}
 }
-
-#define assert_token(x) assert(match_token(x))
-#define assert_token_name(x) assert(token.name == str_intern(x) && match_token(TOKEN_NAME))
-#define assert_token_int(x) assert(token.int_val == (x) && match_token(TOKEN_INT))
-#define assert_token_float(x) assert(token.float_val == (x) && match_token(TOKEN_FLOAT))
-#define assert_token_str(x) assert(strcmp(token.str_val,(x)) ==0 && match_token(TOKEN_STR))
-#define assert_token_eof(x) assert(is_token(0))
-
-void lex_test(){
-	// Integer literal tests
-	init_stream("2342352352");
-	assert_token_int(2342352352ull);
-	assert_token_eof();
-
-	init_stream("0xffff");
-	assert_token_int(0xffffull);
-	assert_token_eof();
-
-	init_stream("042");
-	assert_token_int(042);
-	assert_token_eof();
-
-	init_stream("0b0101");
-	assert_token_int(0b0101);
-	assert_token_eof();
-
-	init_stream("0 2342352352 0xffff 042 0b1111");
-	assert_token_int(0);
-	assert_token_int(2342352352ull);
-	assert_token_int(0xffffull);
-	assert_token_int(042);
-	assert_token_int(0xf);
-	assert_token_eof();
-
-	//Float literal tests
-	init_stream("3.14");
-	assert_token_float(3.14);
-	assert_token_eof();
-
-	init_stream(".14");
-	assert_token_float(.14);
-	assert_token_eof();
-
-	init_stream("3.14 .14 43.22     12. 3e10");
-	assert_token_float(3.14);
-	assert_token_float(0.14);
-	assert_token_float(43.22);
-	assert_token_float(12);
-	assert_token_float(3e10);
-	assert_token_eof();
-
-	//Char literal tests
-	init_stream("'a'");
-	assert_token_int('a');
-	assert_token_eof();
-	init_stream("'\\n'");
-	assert_token_int('\n');
-	assert_token_eof();
-	init_stream("'a' '\\n' '\\r'");
-	assert_token_int('a');
-	assert_token_int('\n');
-	assert_token_int('\r');
-	assert_token_eof();
-
-	//String literal tests
-	init_stream("\"foo\"");
-	assert_token_str("foo");
-	assert_token_eof();
-	init_stream("\"a\\nb\"");
-	assert_token_str("a\nb");
-	assert_token_eof();
-
-	//Operator  tests
-	init_stream("+ : := ++ -- += -= < > <= << >> >= <<= >>=");
-	assert_token('+');
-	assert_token(':');
-	assert_token(TOKEN_COLON_ASSIGN);
-	assert_token(TOKEN_INC);
-	assert_token(TOKEN_DEC);
-	assert_token(TOKEN_ADD_ASSIGN);
-	assert_token(TOKEN_SUB_ASSIGN);
-	assert_token('<');
-	assert_token('>');
-	assert_token(TOKEN_LTEQ);
-	assert_token(TOKEN_LSHIFT);
-	assert_token(TOKEN_RSHIFT);
-	assert_token(TOKEN_GTEQ);
-	assert_token(TOKEN_LSHIFT_ASSIGN);
-	assert_token(TOKEN_RSHIFT_ASSIGN);
-	assert_token_eof();
-
-
-	init_stream("XY+(XY)_HELLO1,234+2147");
-	assert_token_name("XY");
-	assert_token('+');
-	assert_token('(');
-	assert_token_name("XY");
-	assert_token(')');
-	assert_token_name("_HELLO1");
-	assert_token(',');
-	assert_token_int(234);
-	assert_token('+');
-	assert_token_int(2147);
-	assert_token_eof();
-
-}
-
-#undef assert_token_eof
-#undef assert_token_str
-#undef assert_token_float
-#undef assert_token_int
-#undef assert_token_name
-#undef assert_token

@@ -121,17 +121,3 @@ const char *str_intern(const char *str){
 	return str_intern_range(str, str+strlen(str));
 }
 
-void str_intern_test(){
-	char x[] = "hello";
-	char y[] = "hello";
-	assert(x!=y);
-	assert(str_intern(x)==str_intern(y));
-	char z[] = "hello!";
-	assert(str_intern(z) != str_intern(y));
-
-}
-
-void common_test(){
-	buf_test();
-	str_intern_test();
-}

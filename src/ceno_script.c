@@ -17,6 +17,8 @@
 #include "ast.c"
 #include "parser.c"
 
+#include "test.c"
+
 void main_test(){
 	common_test();
 	lex_test();
