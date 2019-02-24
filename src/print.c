@@ -333,7 +333,7 @@ void print_stmt(Stmt *stmt){
             break;
 
         case STMT_ASSIGN:
-            printf("(%s ", tokenkind_to_str[s->assign.op]);
+            printf("(%s ", token_kind_name(s->assign.op));
             print_expr(s->assign.left);
             printf(" ");
             print_expr(s->assign.right);

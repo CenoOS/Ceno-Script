@@ -235,8 +235,9 @@ void parse_test(void) {
         "func f() { enum E { A, B, C } return; }",
         "func f() { if (1) { return 1; } else if (2) { return 2; } else { return 3; } }",
 	};
+    init_keywords();
     for (const char **it = decls; it != decls + sizeof(decls)/sizeof(*decls); it++) {
-       // init_stream(NULL, *it);
+        init_stream(*it);
         Decl *decl = parse_decl();
         printf("\n");
     }

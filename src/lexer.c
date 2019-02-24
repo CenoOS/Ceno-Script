@@ -1,3 +1,96 @@
+const char *typedef_keyword;
+const char *enum_keyword;
+const char *struct_keyword;
+const char *union_keyword;
+const char *var_keyword;
+const char *const_keyword;
+const char *func_keyword;
+const char *sizeof_keyword;
+const char *alignof_keyword;
+const char *typeof_keyword;
+const char *offsetof_keyword;
+const char *break_keyword;
+const char *continue_keyword;
+const char *return_keyword;
+const char *if_keyword;
+const char *else_keyword;
+const char *while_keyword;
+const char *do_keyword;
+const char *for_keyword;
+const char *switch_keyword;
+const char *case_keyword;
+const char *default_keyword;
+const char *import_keyword;
+const char *goto_keyword;
+
+const char *first_keyword;
+const char *last_keyword;
+const char **keywords;
+
+const char *always_name;
+const char *foreign_name;
+const char *complete_name;
+const char *assert_name;
+const char *declare_note_name;
+const char *static_assert_name;
+
+#define KEYWORD(name) name##_keyword = str_intern(#name); buf_push(keywords, name##_keyword)
+
+void init_keywords(void) {
+    static bool inited;
+    if (inited) {
+        return;
+    }
+    KEYWORD(typedef);
+    KEYWORD(enum);
+    KEYWORD(struct);
+    KEYWORD(union);
+    KEYWORD(const);
+    KEYWORD(var);
+    KEYWORD(func);
+    KEYWORD(import);
+    KEYWORD(goto);
+    KEYWORD(sizeof);
+    KEYWORD(alignof);
+    KEYWORD(typeof);
+    KEYWORD(offsetof);
+    KEYWORD(break);
+    KEYWORD(continue);
+    KEYWORD(return);
+    KEYWORD(if);
+    KEYWORD(else);
+    KEYWORD(while);
+    KEYWORD(do);
+    KEYWORD(for);
+    KEYWORD(switch);
+    KEYWORD(case);
+    KEYWORD(default);
+
+    first_keyword = typedef_keyword;
+    last_keyword = default_keyword;
+
+    always_name = str_intern("always");
+    foreign_name = str_intern("foreign");
+    complete_name = str_intern("complete");
+    assert_name = str_intern("assert");
+    declare_note_name = str_intern("declare_note");
+    static_assert_name = str_intern("static_assert");
+
+    inited = true;
+}
+
+#undef KEYWORD
+
+bool is_keyword_name(const char *name) {
+    for(int i = 0; i< buf_len(keywords);i++){
+		if(name==keywords[i]){
+			return true;
+		}
+	}
+	return false;
+}
+
+
 // lexing:treanslating char stream to token stream
 typedef enum TokenKind{
 	TOKEN_EOF = 0,
@@ -27,6 +120,10 @@ typedef enum TokenKind{
 	TOKEN_MOD_ASSIGN,
 	TOKEN_INC,
 	TOKEN_DEC,
+
+
+	TOKEN_POUND,
+	TOKEN_KEYWORD,
 } TokenKind;
 
 typedef enum TokenMod{
@@ -37,7 +134,7 @@ typedef enum TokenMod{
 	TOKENMOD_CHAR
 } TokenMod;
 
-char  *tokenkind_to_str[256] = {
+const char *token_kind_names[] = {
 	[TOKEN_LSHIFT]="<<",
 	[TOKEN_RSHIFT]=">>",
 	[TOKEN_EQ]="==",
@@ -59,7 +156,16 @@ char  *tokenkind_to_str[256] = {
 	[TOKEN_MOD_ASSIGN]="\%=",
 	[TOKEN_INC]="++",
 	[TOKEN_DEC]="--",
+	[TOKEN_POUND]='#',
 };
+
+const char *token_kind_name(TokenKind kind) {
+    if (kind < sizeof(token_kind_names)/sizeof(*token_kind_names)) {
+        return token_kind_names[kind];
+    } else {
+        return "<unknown>";
+    }
+}
 
 
 size_t copy_token_kind_str(char *dest,size_t dest_size, TokenKind kind){
@@ -86,26 +192,6 @@ size_t copy_token_kind_str(char *dest,size_t dest_size, TokenKind kind){
 			break;
 	}
 	return n;
-}
-
-const char *token_kind_name(TokenKind kind){
-	static char buf[245];
-	switch(kind){
-		case TOKEN_INT:
-			sprintf(buf, "integer");
-			break;
-		case TOKEN_NAME:
-			sprintf(buf,"name");
-			break;
-		default:
-			if(kind<128 && isprint(kind)){
-				sprintf(buf,"%c", kind);
-			}else{
-				sprintf(buf,"<ASCII %d>", kind);
-			}
-			break;
-	}
-	return buf;
 }
 
 typedef struct Token{
@@ -354,8 +440,8 @@ top:
 			while(isalnum(*stream) || *stream == '_'){
 				stream++;
 			} 
-			token.kind = TOKEN_NAME;
 			token.name = str_intern_range(token.start, stream);
+			token.kind = is_keyword_name(token.name) ? TOKEN_KEYWORD : TOKEN_NAME;
 			break;
 		case '<':
 			token.kind = *stream++;
@@ -433,6 +519,9 @@ bool is_token(TokenKind kind){
 	return token.kind == kind;
 }
 
+bool is_token_eof(void) {
+    return token.kind == TOKEN_EOF;
+}
 
 bool is_token_name(const char  *name){
 	return token.kind == TOKEN_NAME && token.name == name;
@@ -456,3 +545,17 @@ bool expect_token(TokenKind kind){
 		return false;
 	}
 }
+
+bool is_keyword(const char *name) {
+    return is_token(TOKEN_KEYWORD) && token.name == name;
+}
+
+bool match_keyword(const char *name) {
+    if (is_keyword(name)) {
+        next_token();
+        return true;
+    } else {
+        return false;
+    }
+}
+
