@@ -509,6 +509,8 @@ void print_token(Token token){
 		case TOKEN_NAME:
 			printf("TOKEN NAME: %.*s\n",(int)(token.end - token.start), token.start);
 			break;
+		case TOKEN_KEYWORD:
+			printf("TOKEN KEYWORD: %s\n",token.name);
 		default:
 			printf("'%c'\n",token.kind);
 			break;

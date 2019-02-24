@@ -9,39 +9,39 @@
 
 
 bool is_cmp_op(){
-	return is_token(TOKEN_EQ) || 
+	return (is_token(TOKEN_EQ) || 
 			 is_token(TOKEN_NOTEQ) || 
 			 is_token(TOKEN_LTEQ) || 
 			 is_token(TOKEN_GTEQ) ||
 			 is_token('<') ||
-			 is_token('>');
+			 is_token('>'));
 }
 
 bool is_add_op(){
-	return is_token('+') ||
+	return (is_token('+') ||
 			 is_token('-') ||
 			 is_token('|') ||
-			 is_token('^');
+			 is_token('^'));
 }
 
 bool is_mul_op(){
-	return is_token('*') ||
+	return (is_token('*') ||
 			 is_token('/') ||
 			 is_token('%') ||
 			 is_token('&') ||
 			 is_token(TOKEN_LSHIFT) ||
-			 is_token(TOKEN_RSHIFT);
+			 is_token(TOKEN_RSHIFT));
 }
 
 bool is_unary_op(){
-	return is_token('*') ||
+	return (is_token('*') ||
 			 is_token('&') ||
 			 is_token('-') ||
-			 is_token('+');
+			 is_token('+'));
 }
 
 bool is_assign_op(void) {
-    return is_token('=') ||
+    return (is_token('=') ||
 			 is_token(TOKEN_COLON_ASSIGN) ||
 			 is_token(TOKEN_ADD_ASSIGN) ||
 			 is_token(TOKEN_SUB_ASSIGN) ||
@@ -52,7 +52,7 @@ bool is_assign_op(void) {
 			 is_token(TOKEN_RSHIFT_ASSIGN) ||
 			 is_token(TOKEN_MUL_ASSIGN) ||
 			 is_token(TOKEN_DIV_ASSIGN) ||
-			 is_token(TOKEN_MOD_ASSIGN);
+			 is_token(TOKEN_MOD_ASSIGN));
 }
 
 Expr *parse_expr();
@@ -110,9 +110,7 @@ TypeSpec *parse_type(){
 		if(match_token('[')){
 			Expr *expr = NULL;
 			if(!is_token(']')){
-				printf("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF");
 				expr = parse_expr();
-				printf("JJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJJ");
 			}
 			expect_token(']');
 			type = typespec_array(type,expr);
@@ -128,6 +126,7 @@ TypeSpec *parse_type(){
 /******************************** expr praser *********************************/
 
 Expr *parse_expr_compound(TypeSpec *type){
+	printf("parse_expr_compound\n");
 	expect_token('{');
 	Expr **args = NULL;
 	if(!is_token('}')){
@@ -141,6 +140,7 @@ Expr *parse_expr_compound(TypeSpec *type){
 }
 
 Expr *parse_expr_operand(){
+	printf("parse_expr_operand\n");
 	if(is_token(TOKEN_NAME)){
 		const char *name = token.name;
 		next_token();
@@ -185,6 +185,7 @@ Expr *parse_expr_operand(){
  * a.x
  */
 Expr *parse_expr_base(){
+	printf("parse_expr_base\n");
 	Expr *expr = parse_expr_operand();
 	while(is_token('(') || is_token('[') || is_token('.')){
 		if(match_token('(')){
@@ -211,6 +212,7 @@ Expr *parse_expr_base(){
 }
 
 Expr *parse_expr_unary(){
+	printf("parse_expr_unary\n");
 	if(is_unary_op()){
 		TokenKind op = token.kind;
 		next_token();
@@ -221,8 +223,9 @@ Expr *parse_expr_unary(){
 }
 
 Expr *parse_expr_mul(){
+	printf("parse_expr_mul\n");
 	Expr *expr = parse_expr_unary();
-	while(is_mul_op){
+	while(is_mul_op()){
 		TokenKind op  = token.kind;
 		next_token;
 		expr = expr_binary(op,expr,parse_expr_unary());
@@ -231,6 +234,7 @@ Expr *parse_expr_mul(){
 }
 
 Expr *parse_expr_add(){
+	printf("parse_expr_add\n");
 	Expr *expr = parse_expr_mul();
 	while(is_add_op()){
 		TokenKind op = token.kind;
@@ -241,6 +245,7 @@ Expr *parse_expr_add(){
 }
 
 Expr *parse_expr_cmp(){
+	printf("parse_expr_cmp\n");
 	Expr *expr = parse_expr_add();
 	while(is_cmp_op()){
 		TokenKind op = token.kind;
@@ -251,15 +256,16 @@ Expr *parse_expr_cmp(){
 }
 
 Expr *parse_expr_and(){
+	printf("parse_expr_and\n");
 	Expr *expr = parse_expr_cmp();
 	while(match_token(TOKEN_AND)){
 		expr = expr_binary(TOKEN_AND,expr,parse_expr_cmp());
 	}
-
 	return expr;
 }
 
 Expr *parse_expr_or(){
+	printf("parse_expr_or\n");
 	Expr *expr = parse_expr_and();
 	while(match_token(TOKEN_OR)){
 		expr = expr_binary(TOKEN_OR,expr,parse_expr_and());
@@ -269,6 +275,7 @@ Expr *parse_expr_or(){
 }
 
 Expr *parse_expr_ternary(){
+	printf("parse_expr_ternary\n");
 	Expr *expr = parse_expr_or();
 	if(match_token('?')){
 		Expr *then_expr = parse_expr_ternary();
@@ -281,6 +288,7 @@ Expr *parse_expr_ternary(){
 }
 
 Expr *parse_expr(){
+	printf("parse_expr\n");
 	return parse_expr_ternary();
 }
 
@@ -487,8 +495,8 @@ Decl *parse_decl_aggregate(DeclKind kind){
 
 const char *parse_name(){
 	const char *name = token.name;
-	next_token();
-	return name;
+    expect_token(TOKEN_NAME);
+    return name;
 }
 
 Decl *parse_decl_const(){
@@ -507,6 +515,7 @@ Decl *parse_decl_func(){
 
 Decl *parse_decl_var(){
 	const char *name = parse_name();
+
     if (match_token('=')) {
         Expr *expr = parse_expr();
         expect_token(';');
