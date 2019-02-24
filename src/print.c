@@ -117,9 +117,17 @@ void print_expr_line(Expr *expr){
 
 
 
+void print_aggregate_item(AggregateItem item){
+    print_typespec(item.type);
+    for(char *it = item.names; it != item.names+item.num_names; it++){
+        printf("%s ",it);
+    }
+}
 
 void print_aggregate_decl(Decl *decl){
-
+    for(AggregateItem *it = decl->aggregate.aggregate_items; it != decl->aggregate.aggregate_items + decl->aggregate.num_aggregate_items; it++){
+        print_aggregate_item(*it);
+    }
 }
 
 
@@ -195,7 +203,16 @@ void print_decl(Decl *decl){
             break;
 
         case DECL_FUNC:
-
+            printf("(func %s",d->name);
+            for(FuncParam *it = d->func_decl.params; it != d->func_decl.params + d->func_decl.num_params; it++){
+                print_typespec(&(*it->type));
+                printf("%s",*it->name);
+            }
+            print_typespec(d->func_decl.return_type);
+            indent++;
+            print_stmt_block(d->func_decl.block);
+            indent--;
+            printf(")");
             break;
 
         default:
