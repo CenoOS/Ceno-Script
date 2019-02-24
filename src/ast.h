@@ -134,8 +134,8 @@ typedef enum StmtKind{
 }StmtKind;
 
 typedef struct StmtBlock {
-	size_t num_stmts;
 	Stmt **stmts;
+	size_t num_stmts;
 } StmtBlock;
 
 typedef struct ReturnStmt{
@@ -157,7 +157,7 @@ typedef struct IfStmt{ // else if .... else
 
 typedef struct WhileStmt{
 	Expr *cond;
-	StmtBlock *block;
+	StmtBlock block;
 } WhileStmt;
 
 

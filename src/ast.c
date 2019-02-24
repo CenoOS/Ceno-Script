@@ -85,7 +85,7 @@ Expr *expr_cast(TypeSpec* type, Expr *expr){
 	return new_expr;
 }
 
-Expr *expr_call(Expr *operand,size_t num_args, Expr **args){
+Expr *expr_call(Expr *operand, Expr **args, size_t num_args){
 	Expr *expr = expr_new(EXPR_CALL);
 	expr->compound.type = operand;
 	expr->compound.num_args =num_args;
@@ -252,7 +252,7 @@ Stmt *stmt_if(Expr *cond, StmtBlock then_block,	ElseIf *elseifs, size_t num_else
 }
 
 
-Stmt *stmt_while(Expr *cond, StmtBlock *block){
+Stmt *stmt_while(Expr *cond, StmtBlock block){
 	Stmt *stmt = stmt_new(STMT_WHILE);
 	stmt->while_stmt.cond = cond;
 	stmt->while_stmt.block = block;
@@ -260,7 +260,7 @@ Stmt *stmt_while(Expr *cond, StmtBlock *block){
 }
 
 
-Stmt *stmt_do_while(Expr *cond, StmtBlock *block){
+Stmt *stmt_do_while(Expr *cond, StmtBlock block){
 	Stmt *stmt = stmt_new(STMT_DO_WHILE);
 	stmt->while_stmt.cond = cond;
 	stmt->while_stmt.block = block;
@@ -312,7 +312,7 @@ Stmt *stmt_expr(Expr *expr){
 
 
 
-void expr_test(){
+void print_test(){
 
 	Expr *exprs[] = {
 		expr_int(64),
@@ -320,7 +320,7 @@ void expr_test(){
 		expr_unary('-',expr_float(3.1415926)),
 		expr_ternary(expr_name("flag"),expr_str("true"),expr_str("false")),
 		expr_field(expr_name("person"),"name"),
-		expr_call(expr_name("fact"),1,&(Expr*[]){expr_int(64)}),
+		expr_call(expr_name("fact"),(Expr*[]){expr_int(64)},1),
 		expr_index(expr_field(expr_name("person"),"age"),expr_int(4)),
 		expr_cast(typespec_name("int_ptr"),expr_name("void_ptr")),
 		expr_cast(typespec_pointer(typespec_name("int")),expr_name("void_ptr")),
@@ -330,11 +330,63 @@ void expr_test(){
 		print_expr_line(*it);
 	}
 
-	Stmt* stmts[] = {
-
+	Stmt *stmts[] = {
+		stmt_return(expr_int(12)),
+		stmt_break(),
+		stmt_continue(),
+		stmt_block(
+			(StmtBlock){
+				(Stmt*[]){
+					stmt_break(),
+					stmt_continue(),
+				},
+				2,
+			}
+		),
+		stmt_expr(expr_call(expr_name("print"),(Expr*[]){expr_int(1),expr_int(2)},2)),
+		stmt_init("x", expr_int(1)),
+		stmt_if(
+			expr_name("flag1"),
+			(StmtBlock){
+				(Stmt*[]){
+					stmt_return(expr_int(1)),
+				},
+				1,
+			},
+			(ElseIf[]){
+				expr_name("flag2"),
+				(StmtBlock){
+					(Stmt*[]){
+						stmt_return(expr_int(3)),
+					},
+					1,
+				}
+			},
+			1,
+			(StmtBlock){
+				(Stmt*[]){
+					stmt_return(expr_int(4)),
+				},
+				1,
+			}
+		),
+		stmt_while(
+			expr_name("running"),
+			(StmtBlock){
+				(Stmt*[]){
+					stmt_assign(TOKEN_ADD_ASSIGN, expr_name("i"), expr_int(7))
+				},
+				1,
+			}
+		)
 	};
+
+	for(Stmt **it = stmts; it != stmts + sizeof(stmts)/sizeof(*stmts); it++){
+		printf("\n\n");
+		print_stmt(*it);
+	}
 }
 
 void ast_test(){
-	expr_test();
+	print_test();
 }

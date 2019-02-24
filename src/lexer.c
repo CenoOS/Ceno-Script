@@ -14,7 +14,6 @@ typedef enum TokenKind{
 	TOKEN_GTEQ,
 	TOKEN_AND,
 	TOKEN_OR,
-
 	TOKEN_COLON_ASSIGN,
 	TOKEN_ADD_ASSIGN,
 	TOKEN_SUB_ASSIGN,
@@ -37,6 +36,31 @@ typedef enum TokenMod{
 	TOKENMOD_OCT,
 	TOKENMOD_CHAR
 } TokenMod;
+
+char  *tokenkind_to_str[256] = {
+	[TOKEN_LSHIFT]="<<",
+	[TOKEN_RSHIFT]=">>",
+	[TOKEN_EQ]="==",
+	[TOKEN_NOTEQ]="!=",
+	[TOKEN_LTEQ]="<=",
+	[TOKEN_GTEQ]=">=",
+	[TOKEN_AND]="&&",
+	[TOKEN_OR]="||",
+	[TOKEN_COLON_ASSIGN]=":=",
+	[TOKEN_ADD_ASSIGN]="+=",
+	[TOKEN_SUB_ASSIGN]="-=",
+	[TOKEN_AND_ASSIGN]="&=",
+	[TOKEN_OR_ASSIGN]="|=",
+	[TOKEN_XOR_ASSIGN]="^=",
+	[TOKEN_LSHIFT_ASSIGN]="<<=",
+	[TOKEN_RSHIFT_ASSIGN]=">>=",
+	[TOKEN_MUL_ASSIGN]="*=",
+	[TOKEN_DIV_ASSIGN]="/=",
+	[TOKEN_MOD_ASSIGN]="\%=",
+	[TOKEN_INC]="++",
+	[TOKEN_DEC]="--",
+};
+
 
 size_t copy_token_kind_str(char *dest,size_t dest_size, TokenKind kind){
 	size_t n = 0;
