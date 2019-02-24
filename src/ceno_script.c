@@ -13,6 +13,7 @@
 #include "common.c"
 #include "lexer.c"
 #include "ast.h"
+#include "print.c"
 #include "ast.c"
 #include "parser.c"
 

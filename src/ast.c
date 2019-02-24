@@ -130,6 +130,14 @@ Expr *expr_ternary(Expr *cond,	Expr *then_expr, Expr *else_expr){
 	return new_expr;
 }
 
+Expr *expr_compound(TypeSpec *type, Expr **args, size_t num_args){
+	Expr *new_expr = expr_new(EXPR_COMPOUND);
+	new_expr->compound.type = type;
+	new_expr->compound.args = args;
+	new_expr->compound.num_args = num_args;
+	return new_expr;
+}
+
 
 
 
@@ -210,29 +218,29 @@ Stmt *stmt_new(StmtKind kind){
 	return stmt;
 }
 
-Stmt *return_stmt(Expr *expr){
+Stmt *stmt_return(Expr *expr){
 	Stmt *stmt = stmt_new(STMT_RETURN);
 	stmt->return_stmt.expr = expr;
 	return stmt;
 }
 
-Stmt *break_stmt(){
+Stmt *stmt_break(){
 	Stmt *stmt = stmt_new(STMT_BREAK);
 	return stmt;
 }
 
-Stmt *continue_stmt(){
+Stmt *stmt_continue(){
 	Stmt *stmt = stmt_new(STMT_CONTINUE);
 	return stmt;
 }
 
-Stmt *block_stmt(StmtBlock *block){
+Stmt *stmt_block(StmtBlock block){
 	Stmt *stmt = stmt_new(STMT_BLOCK);
 	stmt->block = block;
 	return stmt;
 }
 
-Stmt *if_stmt(Expr *cond, StmtBlock then_block,	ElseIf *elseifs, size_t num_elseifs, StmtBlock else_block){
+Stmt *stmt_if(Expr *cond, StmtBlock then_block,	ElseIf *elseifs, size_t num_elseifs, StmtBlock else_block){
 	Stmt *stmt = stmt_new(STMT_IF);
 	stmt->if_stmt.cond = cond;
 	stmt->if_stmt.then_block = then_block;
@@ -244,7 +252,7 @@ Stmt *if_stmt(Expr *cond, StmtBlock then_block,	ElseIf *elseifs, size_t num_else
 }
 
 
-Stmt *while_stmt(Expr *cond, StmtBlock *block){
+Stmt *stmt_while(Expr *cond, StmtBlock *block){
 	Stmt *stmt = stmt_new(STMT_WHILE);
 	stmt->while_stmt.cond = cond;
 	stmt->while_stmt.block = block;
@@ -252,7 +260,7 @@ Stmt *while_stmt(Expr *cond, StmtBlock *block){
 }
 
 
-Stmt *do_while_stmt(Expr *cond, StmtBlock *block){
+Stmt *stmt_do_while(Expr *cond, StmtBlock *block){
 	Stmt *stmt = stmt_new(STMT_DO_WHILE);
 	stmt->while_stmt.cond = cond;
 	stmt->while_stmt.block = block;
@@ -260,7 +268,7 @@ Stmt *do_while_stmt(Expr *cond, StmtBlock *block){
 }
 
 
-Stmt *for_stmt(Stmt *init, Expr *cond, Stmt *next, StmtBlock block){
+Stmt *stmt_for(Stmt *init, Expr *cond, Stmt *next, StmtBlock block){
 	Stmt *stmt = stmt_new(STMT_FOR);
 	stmt->for_stmt.init = init;
 	stmt->for_stmt.init = init;
@@ -270,118 +278,39 @@ Stmt *for_stmt(Stmt *init, Expr *cond, Stmt *next, StmtBlock block){
 	return stmt;
 }
 
+Stmt *stmt_switch(Expr *expr, size_t num_cases, SwitchCase *cases){
+	Stmt *stmt = stmt_new(STMT_SWITCH);
+	stmt->switch_stmt.expr = expr;
+	stmt->switch_stmt.num_cases = num_cases;
+	stmt->switch_stmt.cases = cases;
 
-void print_type(TypeSpec *type){
-	switch(type->kind){
-		case TYPESPEC_NAME:
-			printf("%s", type->name);
-			break;
-		case TYPESPEC_FUNC:{
-			FuncTypeSpec func = type->func;
-			printf("(func ");
-			for(TypeSpec **it = func.args; it!=func.args+func.num_args; it++){
-				printf(" ");
-				print_type(*it);
-			}
-			printf(") ");
-			print_type(func.ret);
-			printf(")");
-			break;
-		}
-		case TYPESPEC_ARRAY:
-			printf("(array ");
-			print_type(type->array.elem);
-			printf(" ");
-			print_type(type->array.size);
-			printf(")");
-			break;
-		case TYPESPEC_POINTER:
-			printf("(ptr ");
-			print_type(type->ptr.elem);
-			printf(")");
-			break;
-		default:
-			assert(0);
-			break;
-	}
-}
-void print_expr(Expr* expr){
-	switch(expr->kind){
-		case EXPR_INT:
-			printf("%" PRIu64, expr->int_val);
-			break;
-		case EXPR_FLOAT:
-			printf("%f", expr->float_val);
-			break;
-		case EXPR_STR:
-			printf("\"%s\"", expr->str_val);
-			break;
-		case EXPR_NAME:
-			printf("%s", expr->name);
-			break;
-		case EXPR_CAST:
-			printf("(cast ");
-			print_type(expr->cast.type);
-			printf(" ");
-			print_expr(expr->cast.expr);
-			printf(")");
-			break;
-		case EXPR_CALL:{
-			printf("(");
-			print_expr(expr->call.expr);
-			for(Expr **it = expr->call.args; it!=expr->call.args+expr->call.num_args; it++){
-				printf(" ");
-				print_expr(*it);
-			}
-			printf(")");
-			break;
-		}
-		case EXPR_INDEX:
-			printf("(index ");
-			print_expr(expr->index.expr);
-			printf(" ");
-			print_expr(expr->index.index);
-			printf(")");
-			break;
-		case EXPR_FIELD:
-			printf("(field ");
-			print_expr(expr->field.expr);
-			printf(" %s)",expr->field.name);
-			break;
-		case EXPR_BINARY:
-			printf("(%c ",expr->op);
-			print_expr(expr->binary.left);
-			printf(" ");
-			print_expr(expr->binary.right);
-			printf(")");
-			break;
-		case EXPR_COMPOUND:
-			printf("compound ...");
-			break;
-		case EXPR_UNARY:
-			printf("(%c",expr->op);
-			print_expr(expr->unary.operand);
-			printf(")");
-			break;
-		case EXPR_TERNARY:
-			printf("(if ");
-			print_expr(expr->ternary.cond);
-			printf(" ");
-			print_expr(expr->ternary.then_expr);
-			printf(" ");
-			print_expr(expr->ternary.else_expr);
-			printf(")");
-			break;
-		default:
-			//assert(0);
-			break;
-	}
+	return stmt;
 }
 
-void print_expr_line(Expr *expr){
-	print_expr(expr);
-	printf("\n");
+Stmt *stmt_assign(TokenKind op, Expr* left, Expr *right){
+	Stmt *stmt = stmt_new(STMT_ASSIGN);
+	stmt->assign.op = op;
+	stmt->assign.left = left;
+	stmt->assign.right = right;
+	return stmt;
 }
+
+Stmt *stmt_init(const char *var_name, Expr *expr){
+	Stmt *stmt = stmt_new(STMT_INIT);
+	stmt->init.var_name = var_name;
+	stmt->init.expr = expr;
+	return stmt;
+}
+
+Stmt *stmt_expr(Expr *expr){
+	Stmt *stmt = stmt_new(STMT_EXPR);
+	stmt->expr = expr;
+	return stmt;
+}
+
+
+
+
 
 void expr_test(){
 
@@ -395,10 +324,15 @@ void expr_test(){
 		expr_index(expr_field(expr_name("person"),"age"),expr_int(4)),
 		expr_cast(typespec_name("int_ptr"),expr_name("void_ptr")),
 		expr_cast(typespec_pointer(typespec_name("int")),expr_name("void_ptr")),
+		expr_compound(typespec_name("Vector"),(Expr*[]){expr_int(1), expr_int(2)},2),
 	};
 	for(Expr **it = exprs; it != exprs + sizeof(exprs)/sizeof(*exprs); it++){
 		print_expr_line(*it);
-	}	
+	}
+
+	Stmt* stmts[] = {
+
+	};
 }
 
 void ast_test(){
