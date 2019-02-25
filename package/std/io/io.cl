@@ -1,0 +1,5 @@
+#io library
+
+func printf(...){
+    
+}
