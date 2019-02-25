@@ -207,30 +207,17 @@ void print_test(){
 	}
 }
 
-/**************************************expr test****************************************/
-void expr_test(){
-    const char *exprs[] = {
-            "314",
-    };
-    
-    for(const char **it = exprs; it != exprs + sizeof(exprs)/sizeof(*exprs); it++){
-        init_stream(*it);
-        print_expr_line(parse_expr());
-    }
-}
-
 
 void ast_test(){
 	//print_test();
-    expr_test();
 }
 
 
 /**************************************ast test*****************************************/
 void parse_test(void) {
     const char *decls[] = {
-        "var x:int = 3;",
-        "var x: char[256] = {1, 2, 3, ['a'] = 4};",
+        "var x:int = 3",
+        "var x: char[256] = {1, 2, 3, ['a']}",
         "struct Vector { x, y: float; }",
         "var v = Vector{x = 1.0, y = -1.0}",
         "var v: Vector = {1.0, -1.0}",
@@ -252,7 +239,6 @@ void parse_test(void) {
 	};
     init_keywords();
     for (const char **it = decls; it != decls + sizeof(decls)/sizeof(*decls); it++) {
-        printf("\n%s\n",*it);
         init_stream(*it);
         Decl *decl = parse_decl();
         print_decl(decl);
