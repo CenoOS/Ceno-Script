@@ -1,4 +1,4 @@
-.vs
-.vscode
-.idea
-cmake-build-debug
+.vs/
+.vscode/
+.idea/
+cmake-build-debug/
