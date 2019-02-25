@@ -248,7 +248,6 @@ void parse_test(void) {
 	};
     init_keywords();
     for (const char **it = decls; it != decls + sizeof(decls)/sizeof(*decls); it++) {
-        // printf("##PARSE:%s\n",*it);
 		init_stream(*it);
         Decl *decl = parse_decl();
         print_decl(decl);
