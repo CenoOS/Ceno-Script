@@ -20,9 +20,9 @@
 #include "test.c"
 
 void main_test(){
-	common_test();
+	//	common_test();
 	lex_test();
-	ast_test();
+	//	ast_test();
 	parse_test();
 }
 

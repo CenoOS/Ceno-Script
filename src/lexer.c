@@ -99,31 +99,60 @@ typedef enum TokenKind{
 	TOKEN_FLOAT,
 	TOKEN_STR,
 	TOKEN_NAME,
-	TOKEN_LSHIFT,
-	TOKEN_RSHIFT,
-	TOKEN_EQ,
-	TOKEN_NOTEQ,
-	TOKEN_LTEQ,
-	TOKEN_GTEQ,
-	TOKEN_AND,
-	TOKEN_OR,
-	TOKEN_COLON_ASSIGN,
-	TOKEN_ADD_ASSIGN,
-	TOKEN_SUB_ASSIGN,
-	TOKEN_AND_ASSIGN,
-	TOKEN_OR_ASSIGN,
-	TOKEN_XOR_ASSIGN,
-	TOKEN_LSHIFT_ASSIGN,
-	TOKEN_RSHIFT_ASSIGN,
-	TOKEN_MUL_ASSIGN,
-	TOKEN_DIV_ASSIGN,
-	TOKEN_MOD_ASSIGN,
-	TOKEN_INC,
-	TOKEN_DEC,
+	TOKEN_LSHIFT, // <<
+	TOKEN_RSHIFT, // >>
+	TOKEN_EQ, // == 
+	TOKEN_NOTEQ, // !=
+	TOKEN_LTEQ, // <=
+	TOKEN_GTEQ, // >=
+	TOKEN_AND, // &&
+	TOKEN_OR, // ||
+	TOKEN_COLON_ASSIGN, // :=
+	TOKEN_ADD_ASSIGN, // +=
+	TOKEN_SUB_ASSIGN, // -=
+	TOKEN_AND_ASSIGN, // &=
+	TOKEN_OR_ASSIGN, // |=
+	TOKEN_XOR_ASSIGN, // ^=
+	TOKEN_LSHIFT_ASSIGN, // <<=
+	TOKEN_RSHIFT_ASSIGN, // >>=
+	TOKEN_MUL_ASSIGN, // *=
+	TOKEN_DIV_ASSIGN, // /=
+	TOKEN_MOD_ASSIGN,  // %=
+	TOKEN_INC, // ++
+	TOKEN_DEC, // --
 
 
-	TOKEN_POUND,
+	TOKEN_POUND, 
 	TOKEN_KEYWORD,
+
+	TOKEN_COMMA, // ,
+	TOKEN_DOT, // .
+
+	TOKEN_NOT, // !
+	
+	TOKEN_COLON, // :
+	TOKEN_SEMICOLON, // ;
+	TOKEN_ASSIGN, // =
+	TOKEN_LBRAC, // (
+	TOKEN_RBRAC, // )
+	TOKEN_LSBRAC, // [
+	TOKEN_RSBRAC, // ]
+	TOKEN_LCBRAC, // {
+	TOKEN_RCBRAC, // }
+	TOKEN_QM, // ?
+
+	TOKEN_LT, // <
+	TOKEN_GT, // >
+	TOKEN_ADD, // +
+	TOKEN_SUB, // -
+	TOKEN_MUL, // *
+	TOKEN_DIV, // /
+	TOKEN_MOD, // %
+	TOKEN_BAND, // &
+	TOKEN_BOR, // |
+	TOKEN_XOR, // ^
+	TOKEN_HASHTAG, // #
+
 } TokenKind;
 
 typedef enum TokenMod{
@@ -155,8 +184,31 @@ const char *token_kind_names[] = {
 	[TOKEN_DIV_ASSIGN]="/=",
 	[TOKEN_MOD_ASSIGN]="\%=",
 	[TOKEN_INC]="++",
-	[TOKEN_DEC]="--",
-	[TOKEN_POUND]='#',
+	[TOKEN_DEC]="--",		
+	[TOKEN_COMMA]=",",
+	[TOKEN_DOT]=".",
+	[TOKEN_COLON]= ":",
+	[TOKEN_SEMICOLON] = ";",
+	[TOKEN_ASSIGN]= "=",
+	[TOKEN_LBRAC]= "(",
+	[TOKEN_RBRAC]= ")",
+	[TOKEN_LSBRAC]= "[",
+	[TOKEN_RSBRAC]= "]",
+	[TOKEN_LCBRAC]= "{",
+	[TOKEN_RCBRAC]= "}",
+	[TOKEN_NOT] = "!",
+	[TOKEN_QM]="?",
+	[TOKEN_LT]= "<",
+	[TOKEN_GT]= ">",
+	[TOKEN_ADD]= "+",
+	[TOKEN_SUB]= "-",
+	[TOKEN_MUL]= "*",
+	[TOKEN_DIV]= "/",
+	[TOKEN_MOD]= "\%",
+	[TOKEN_BAND]= "&",
+	[TOKEN_BOR]= "|",
+	[TOKEN_XOR]= "^",
+	[TOKEN_HASHTAG]="#",
 };
 
 const char *token_kind_name(TokenKind kind) {
@@ -378,25 +430,34 @@ void scan_str(){
 	token.str_val = str;
 }
 
-#define CASE1(c,c1,k1) \
-	case c:	\
-			token.kind = *stream++;	\
-			if(*stream==c1){	\
-				token.kind = k1;	\
-				stream++;	\
-			}	\
-			break;
-#define CASE2(c,c1,k1,c2,k2) \
-	case c:	\
-			token.kind = *stream++;	\
-			if(*stream==c1){	\
-				token.kind = k1;	\
-				stream++;	\
-			}else if(*stream==c2){	\
-				token.kind = k2;	\
-				stream++;	\
-			}	\
-			break;
+#define CASE1(c1, k1) \
+    case c1: \
+        token.kind = k1; \
+        stream++; \
+        break;
+
+#define CASE2(c1, k1, c2, k2) \
+    case c1: \
+        token.kind = k1; \
+        stream++; \
+        if (*stream == c2) { \
+            token.kind = k2; \
+            stream++; \
+        } \
+        break;
+
+#define CASE3(c1, k1, c2, k2, c3, k3) \
+    case c1: \
+        token.kind = k1; \
+        stream++; \
+        if (*stream == c2) { \
+            token.kind = k2; \
+            stream++; \
+        } else if (*stream == c3) { \
+            token.kind = k3; \
+            stream++; \
+        } \
+        break;
 void next_token(){
 top:
 	token.start = stream;
@@ -471,24 +532,37 @@ top:
 				stream++;
 			}
 			break;
-		CASE1(':','=',TOKEN_COLON_ASSIGN)
-		CASE1('/','=',TOKEN_DIV_ASSIGN)
-		CASE1('*','=',TOKEN_MUL_ASSIGN)
-		CASE1('%','=',TOKEN_MOD_ASSIGN)
-		CASE1('^','=',TOKEN_XOR_ASSIGN)
-	
-		CASE2('+','=',TOKEN_ADD_ASSIGN,'+',TOKEN_INC)
-		CASE2('-','=',TOKEN_SUB_ASSIGN,'-',TOKEN_DEC)
-		CASE2('&','=',TOKEN_AND_ASSIGN,'&',TOKEN_AND)
-		CASE2('|','=',TOKEN_OR_ASSIGN,'|',TOKEN_OR)
+		
+		CASE1('(', TOKEN_LBRAC)
+    	CASE1(')', TOKEN_RBRAC)
+    	CASE1('{', TOKEN_LCBRAC)
+    	CASE1('}', TOKEN_RCBRAC)
+    	CASE1('[', TOKEN_LSBRAC)
+    	CASE1(']', TOKEN_RSBRAC)
+    	CASE1(',', TOKEN_COMMA)
+    	CASE1('#', TOKEN_HASHTAG)
+    	CASE1('?', TOKEN_QM)
+    	CASE1(';', TOKEN_SEMICOLON)
+    	CASE2('!', TOKEN_NOT, '=', TOKEN_NOTEQ)
+    	CASE2(':', TOKEN_COLON, '=', TOKEN_COLON_ASSIGN)
+    	CASE2('=', TOKEN_ASSIGN, '=', TOKEN_EQ)
+    	CASE2('^', TOKEN_XOR, '=', TOKEN_XOR_ASSIGN)
+    	CASE2('*', TOKEN_MUL, '=', TOKEN_MUL_ASSIGN)
+    	CASE2('%', TOKEN_MOD, '=', TOKEN_MOD_ASSIGN)
+    	CASE3('+', TOKEN_ADD, '=', TOKEN_ADD_ASSIGN, '+', TOKEN_INC)
+    	CASE3('-', TOKEN_SUB, '=', TOKEN_SUB_ASSIGN, '-', TOKEN_DEC)
+    	CASE3('&', TOKEN_BAND, '=', TOKEN_AND_ASSIGN, '&', TOKEN_ADD)
+    	CASE3('|', TOKEN_BOR, '=', TOKEN_OR_ASSIGN, '|', TOKEN_OR)
+
 		default:
 			token.kind = *stream++;
 			break;
 	}
 	token.end = stream;
 }
-#undef CASE2
 #undef CASE1
+#undef CASE2
+#undef CASE3
 
 
 

@@ -91,8 +91,8 @@ void lex_test(){
 
 	//Operator  tests
 	init_stream("+ : := ++ -- += -= < > <= << >> >= <<= >>=");
-	assert_token('+');
-	assert_token(':');
+	assert_token(TOKEN_ADD);
+	assert_token(TOKEN_COLON);
 	assert_token(TOKEN_COLON_ASSIGN);
 	assert_token(TOKEN_INC);
 	assert_token(TOKEN_DEC);
@@ -111,15 +111,24 @@ void lex_test(){
 
 	init_stream("XY+(XY)_HELLO1,234+2147");
 	assert_token_name("XY");
-	assert_token('+');
-	assert_token('(');
+	assert_token(TOKEN_ADD);
+	assert_token(TOKEN_LBRAC);
 	assert_token_name("XY");
-	assert_token(')');
+	assert_token(TOKEN_RBRAC);
 	assert_token_name("_HELLO1");
-	assert_token(',');
+	assert_token(TOKEN_COMMA);
 	assert_token_int(234);
-	assert_token('+');
+	assert_token(TOKEN_ADD);
 	assert_token_int(2147);
+	assert_token_eof();
+
+	init_stream("var x:int = 3");
+	assert_token_name("var");
+	assert_token_name("x");
+	assert_token(TOKEN_COLON);
+	assert_token_name("int");
+	assert_token(TOKEN_ASSIGN);
+	assert_token_int(3);
 	assert_token_eof();
 
 }
@@ -216,14 +225,14 @@ void ast_test(){
 /**************************************ast test*****************************************/
 void parse_test(void) {
     const char *decls[] = {
-        "var x:int = 3",
-        "var x: char[256] = {1, 2, 3, ['a']}",
-        "struct Vector { x, y: float; }",
+        "var x:int = 3;",
+        "var x: char[256] = {1, 2, 3, 'a'};",
+        "struct Vector { x, y: float};",
         "var v = Vector{x = 1.0, y = -1.0}",
-        "var v: Vector = {1.0, -1.0}",
-        "const n = sizeof(:int*[16])",
-        "const n = sizeof(1+2)",
-        "var x = b == 1 ? 1+2 : 3-4",
+        "var v: Vector = {1.0, -1.0};",
+        // "const n = sizeof(:int*[16]);",
+        // "const n = sizeof(1+2);",
+        "var x = b == 1 ? 1+2 : 3-4;",
         "func fact(n: int): int { trace(\"fact\"); if (n == 0) { return 1; } else { return n * fact(n-1); } }",
         "func fact(n: int): int { p := 1; for (i := 1; i <= n; i++) { p *= i; } return p; }",
         "var foo = a ? a&b + c<<d + e*f == +u-v-w + *g/h(x,y) + -i%k[x] && m <= n*(p+q)/r : 0",
@@ -239,7 +248,8 @@ void parse_test(void) {
 	};
     init_keywords();
     for (const char **it = decls; it != decls + sizeof(decls)/sizeof(*decls); it++) {
-        init_stream(*it);
+        // printf("##PARSE:%s\n",*it);
+		init_stream(*it);
         Decl *decl = parse_decl();
         print_decl(decl);
         printf("\n");

@@ -1,6 +1,6 @@
 
 /**
- * expr3 = INT | '(' expr ')'
+ * expr3 = INT | TOKEN_LBRAC expr TOKEN_RBRAC
  * expr2 = [-]expr2 | exp3
  * expr1 = expr2 ([/*] expr2)* 
  * expr0 = expr1 ([+-] expr1)* 
@@ -13,35 +13,35 @@ bool is_cmp_op(){
 			 is_token(TOKEN_NOTEQ) || 
 			 is_token(TOKEN_LTEQ) || 
 			 is_token(TOKEN_GTEQ) ||
-			 is_token('<') ||
-			 is_token('>'));
+			 is_token(TOKEN_LT) ||
+			 is_token(TOKEN_GT));
 }
 
 bool is_add_op(){
-	return (is_token('+') ||
-			 is_token('-') ||
-			 is_token('|') ||
-			 is_token('^'));
+	return (is_token(TOKEN_ADD) ||
+			 is_token(TOKEN_SUB) ||
+			 is_token(TOKEN_BOR) ||
+			 is_token(TOKEN_XOR));
 }
 
 bool is_mul_op(){
-	return (is_token('*') ||
-			 is_token('/') ||
-			 is_token('%') ||
-			 is_token('&') ||
+	return (is_token(TOKEN_MUL) ||
+			 is_token(TOKEN_DIV) ||
+			 is_token(TOKEN_MOD) ||
+			 is_token(TOKEN_BAND) ||
 			 is_token(TOKEN_LSHIFT) ||
 			 is_token(TOKEN_RSHIFT));
 }
 
 bool is_unary_op(){
-	return (is_token('*') ||
-			 is_token('&') ||
-			 is_token('-') ||
-			 is_token('+'));
+	return (is_token(TOKEN_MUL) ||
+			 is_token(TOKEN_BAND) ||
+			 is_token(TOKEN_SUB) ||
+			 is_token(TOKEN_ADD));
 }
 
 bool is_assign_op(void) {
-    return (is_token('=') ||
+    return (is_token(TOKEN_ASSIGN) ||
 			 is_token(TOKEN_COLON_ASSIGN) ||
 			 is_token(TOKEN_ADD_ASSIGN) ||
 			 is_token(TOKEN_SUB_ASSIGN) ||
@@ -69,7 +69,7 @@ const char *parse_name(){
 
 TypeSpec *parse_type_func_param(){
 	TypeSpec *type = parse_type();
-    if (match_token(':')) {
+    if (match_token(TOKEN_COLON)) {
         if (type->kind != TYPESPEC_NAME) {
             syntax_error("Colons in parameters of func types must be preceded by names.");
         }
@@ -79,17 +79,17 @@ TypeSpec *parse_type_func_param(){
 }
 
 TypeSpec *parse_type_func(){
-	expect_token('(');
+	expect_token(TOKEN_LBRAC);
 	TypeSpec **args = NULL;
-	if(!is_token(')')){
+	if(!is_token(TOKEN_RBRAC)){
 		buf_push(args,parse_type_func_param());
-		while(match_token(',')){
+		while(match_token(TOKEN_COMMA)){
 			buf_push(args,parse_type_func_param());
 		}
 	}
-	expect_token(')');
+	expect_token(TOKEN_RBRAC);
 	TypeSpec *ret = NULL;
-	if(match_token(':')){
+	if(match_token(TOKEN_COLON)){
 		ret = parse_type();
 	}
 
@@ -103,7 +103,7 @@ TypeSpec *parse_type_base(){
 		return typespec_name(name);
 	}else if(match_keyword(func_keyword)){
 		return parse_type_func();
-	}else if(match_token('(')){
+	}else if(match_token(TOKEN_LBRAC)){
 		return parse_type();
 	}else{
 		syntax_error("Unexpect token %s in type",token_kind_name(token.kind));
@@ -113,16 +113,16 @@ TypeSpec *parse_type_base(){
 
 TypeSpec *parse_type(){
 	TypeSpec *type = parse_type_base();
-	while(is_token('[') || is_token('*')){
-		if(match_token('[')){
+	while(is_token(TOKEN_LSBRAC) || is_token(TOKEN_MUL)){
+		if(match_token(TOKEN_LSBRAC)){
 			Expr *expr = NULL;
-			if(!is_token(']')){
+			if(!is_token(TOKEN_RSBRAC)){
 				expr = parse_expr();
 			}
-			expect_token(']');
+			expect_token(TOKEN_RSBRAC);
 			type = typespec_array(type,expr);
 		}else{
-			assert(is_token('*'));
+			assert(is_token(TOKEN_MUL));
 			next_token();
 			type = typespec_pointer(type);
 		}
@@ -133,15 +133,15 @@ TypeSpec *parse_type(){
 /******************************** expr praser *********************************/
 
 Expr *parse_expr_compound(TypeSpec *type){
-	expect_token('{');
+	expect_token(TOKEN_LCBRAC);
 	Expr **args = NULL;
-	if(!is_token('}')){
+	if(!is_token(TOKEN_RCBRAC)){
 		buf_push(args,parse_expr());
-		while(match_token(',')){
+		while(match_token(TOKEN_COMMA)){
 			buf_push(args,parse_expr());
 		}
 	}
-	expect_token('}');
+	expect_token(TOKEN_RCBRAC);
 	return expr_compound(type,args,buf_len(args));
 }
 
@@ -149,7 +149,7 @@ Expr *parse_expr_operand(){
 	if(is_token(TOKEN_NAME)){
 		const char *name = token.name;
 		next_token();
-		if(is_token('{')){
+		if(is_token(TOKEN_LCBRAC)){
 			return parse_expr_compound(typespec_name(name));
 		}else{
 			return expr_name(name);
@@ -166,16 +166,16 @@ Expr *parse_expr_operand(){
 		const char *str_val = token.str_val;
 		next_token();
 		return expr_str(str_val);
-	}else if(is_token('{')){
+	}else if(is_token(TOKEN_LCBRAC)){
 		return parse_expr_compound(NULL);
-	}else if(match_token('(')){
-		if(is_token(':')){
+	}else if(match_token(TOKEN_LBRAC)){
+		if(is_token(TOKEN_COLON)){
 			TypeSpec *type = parse_type();
-			expect_token(')');
+			expect_token(TOKEN_RBRAC);
 			return parse_expr_compound(type);
 		}else{
 			Expr *expr = parse_expr();
-			expect_token(')');
+			expect_token(TOKEN_RBRAC);
 			return expr;
 		}
 	}else{
@@ -191,21 +191,21 @@ Expr *parse_expr_operand(){
  */
 Expr *parse_expr_base(){
 	Expr *expr = parse_expr_operand();
-	while(is_token('(') || is_token('[') || is_token('.')){
-		if(match_token('(')){
+	while(is_token(TOKEN_LBRAC) || is_token(TOKEN_LSBRAC) || is_token(TOKEN_DOT)){
+		if(match_token(TOKEN_LBRAC)){
 			Expr **args = NULL;
 			buf_push(args,parse_expr());
-			while(is_token(',')){
+			while(is_token(TOKEN_COMMA)){
 				buf_push(args,parse_expr());
 			}
-			expect_token(')');
+			expect_token(TOKEN_RBRAC);
 			expr = expr_call(expr,args,buf_len(args));
-		}else if(match_token('[')){
+		}else if(match_token(TOKEN_LSBRAC)){
 			Expr *index = parse_expr();
-			expect_token(']');
+			expect_token(TOKEN_RSBRAC);
 			expr = expr_index(expr,index);
 		}else{
-			assert(is_token('.'));
+			assert(is_token(TOKEN_DOT));
 			const char *field = token.name;
 			next_token();
 			expect_token(TOKEN_NAME);
@@ -274,9 +274,9 @@ Expr *parse_expr_or(){
 
 Expr *parse_expr_ternary(){
 	Expr *expr = parse_expr_or();
-	if(match_token('?')){
+	if(match_token(TOKEN_QM)){
 		Expr *then_expr = parse_expr_ternary();
-		expect_token(':');
+		expect_token(TOKEN_COLON);
 		Expr* else_expr = parse_expr_ternary();
 		
 		expr = expr_ternary(expr,then_expr,else_expr);
@@ -290,9 +290,9 @@ Expr *parse_expr(){
 
 // ( expr )
 Expr *parse_paren_expr(){
-	expect_token('(');
+	expect_token(TOKEN_LBRAC);
 	Expr *expr = parse_expr();
-	expect_token(')');
+	expect_token(TOKEN_RBRAC);
 	return expr;
 }
 
@@ -308,7 +308,7 @@ Stmt *parse_init_stmt(Expr *left) {
             return NULL;
         }
         return stmt_init(left->name, parse_expr());
-    } else if (match_token(':')) {
+    } else if (match_token(TOKEN_COLON)) {
         if (left->kind != EXPR_NAME) {
             syntax_error(": must be preceded by a name");
             return NULL;
@@ -316,7 +316,7 @@ Stmt *parse_init_stmt(Expr *left) {
         const char *name = left->name;
         TypeSpec *type = parse_type();
         Expr *expr = NULL;
-        if (match_token('=')) {
+        if (match_token(TOKEN_ASSIGN)) {
             expr = parse_expr();
         }
         return stmt_init(name, expr);
@@ -371,27 +371,27 @@ Stmt *parse_stmt_do_while(){
 	Expr *cond = parse_paren_expr();
 
 	return stmt_while(cond, block);
-	expect_token(';');
+	expect_token(TOKEN_SEMICOLON);
 }
 
 Stmt *parse_stmt_for(){
-	expect_token('(');
+	expect_token(TOKEN_LBRAC);
 	Stmt *init = NULL;
-	if(!is_token(';')){
+	if(!is_token(TOKEN_SEMICOLON)){
 		init = parse_simple_stmt();
 	}
-	expect_token(';');
+	expect_token(TOKEN_SEMICOLON);
 	Expr *cond = NULL;
-	if(!is_token(';')){
+	if(!is_token(TOKEN_SEMICOLON)){
 		cond = parse_expr();
 	}
 	Stmt *next = NULL;
-	if(match_token(';')){
-		if(!is_token(')')){
+	if(match_token(TOKEN_SEMICOLON)){
+		if(!is_token(TOKEN_RBRAC)){
 			next = parse_simple_stmt();
 		}
 	}
-	expect_token(')');
+	expect_token(TOKEN_RBRAC);
 	return stmt_for(init,cond,next,parse_stmt_block());
 }
 
@@ -405,7 +405,7 @@ SwitchCase parse_stmt_switch_case(void) {
                 is_first_case = false;
             }
             buf_push(exprs, parse_expr());
-            while (match_token(',')) {
+            while (match_token(TOKEN_COMMA)) {
                 buf_push(exprs, parse_expr());
             }
         } else {
@@ -416,10 +416,10 @@ SwitchCase parse_stmt_switch_case(void) {
             }
             is_default = true;
         }
-        expect_token(':');
+        expect_token(TOKEN_COLON);
     }
     Stmt **stmts = NULL;
-    while (!is_token_eof() && !is_token(')') && !is_keyword(case_keyword) && !is_keyword(default_keyword)) {
+    while (!is_token_eof() && !is_token(TOKEN_RBRAC) && !is_keyword(case_keyword) && !is_keyword(default_keyword)) {
         buf_push(stmts, parse_stmt());
     }
     return (SwitchCase){buf_len(exprs),exprs, is_default, ((StmtBlock){stmts, buf_len(stmts)})};
@@ -428,21 +428,21 @@ SwitchCase parse_stmt_switch_case(void) {
 Stmt *parse_stmt_switch(){
 	Expr *expr = parse_paren_expr();
     SwitchCase *cases = NULL;
-    expect_token('{');
-    while (!is_token_eof() && !is_token('}')) {
+    expect_token(TOKEN_LCBRAC);
+    while (!is_token_eof() && !is_token(TOKEN_RCBRAC)) {
         buf_push(cases, parse_stmt_switch_case());
     }
-    expect_token('}');
+    expect_token(TOKEN_RCBRAC);
     return stmt_switch(expr, cases, buf_len(cases));
 }
 
 StmtBlock parse_stmt_block(){
-	expect_token('{');
+	expect_token(TOKEN_LCBRAC);
 	Stmt **stmts = NULL;
-	while(!is_token_eof() && !is_token('}')){
+	while(!is_token_eof() && !is_token(TOKEN_RCBRAC)){
 		buf_push(stmts, parse_stmt());
 	}
-	expect_token('}');
+	expect_token(TOKEN_RCBRAC);
 	return (StmtBlock){stmts,buf_len(stmts)};
 }
 
@@ -457,21 +457,21 @@ Stmt *parse_stmt(){
 		return parse_stmt_do_while();
 	}else if(match_keyword(switch_keyword)){
 		return parse_stmt_switch();
-	}else if(is_token('{')){
+	}else if(is_token(TOKEN_LCBRAC)){
 		return stmt_block(parse_stmt_block());
 	}else if(match_keyword(return_keyword)){
 		Stmt *stmt = stmt_return(parse_expr());
-		expect_token(';');
+		expect_token(TOKEN_SEMICOLON);
 		return stmt;
 	}else if(match_keyword(break_keyword)){
-		expect_token(';');
+		expect_token(TOKEN_SEMICOLON);
 		return stmt_break();
 	}else if(match_keyword(continue_keyword)){
-		expect_token(';');
+		expect_token(TOKEN_SEMICOLON);
 		return stmt_continue();
 	}else{
 		Stmt *stmt = parse_simple_stmt();
-		expect_token(';');
+		expect_token(TOKEN_SEMICOLON);
 		return stmt;
 	}
 }
@@ -498,27 +498,27 @@ Decl *parse_decl_aggregate(DeclKind kind){
 Decl *parse_decl_const(){
 	const char *name = parse_name();
 	TypeSpec *type = NULL;
-    if (match_token(':')) {
+    if (match_token(TOKEN_COLON)) {
         type = parse_type();
     }
-    expect_token('=');
+    expect_token(TOKEN_ASSIGN);
     Expr *expr = parse_expr();
-    expect_token(';');
+    expect_token(TOKEN_SEMICOLON);
     // return decl_const(name,type, expr);
 	return decl_const(name,expr);
 }
 
 Decl *parse_decl_typedef(){
  	const char *name = parse_name();
-    expect_token('=');
+    expect_token(TOKEN_ASSIGN);
     TypeSpec *type = parse_type();
-    expect_token(';');
+    expect_token(TOKEN_SEMICOLON);
     return decl_typedef(name, type);
 }
 
 FuncParam parse_decl_func_param() {
     const char *name = parse_name();
-    expect_token(':');
+    expect_token(TOKEN_COLON);
     TypeSpec *type = parse_type();
     return (FuncParam){ name, type};
 }
@@ -526,12 +526,12 @@ FuncParam parse_decl_func_param() {
 
 Decl *parse_decl_func(){
  const char *name = parse_name();
-    expect_token('(');
+    expect_token(TOKEN_LBRAC);
     FuncParam *params = NULL;
     // bool has_varargs = false;
-    if (!is_token(')')) {
+    if (!is_token(TOKEN_RBRAC)) {
         buf_push(params, parse_decl_func_param());
-        while (match_token(',')) {
+        while (match_token(TOKEN_COMMA)) {
             // if (match_token(TOKEN_ELLIPSIS)) {
             //     if (has_varargs) {
             //         error_here("Multiple ellipsis in function declaration");
@@ -545,14 +545,14 @@ Decl *parse_decl_func(){
             // }
         }
     }
-    expect_token(')');
+    expect_token(TOKEN_RBRAC);
     TypeSpec *ret_type = NULL;
-    if (match_token(':')) {
+    if (match_token(TOKEN_COLON)) {
         ret_type = parse_type();
     }
     StmtBlock block = {0};
     bool is_incomplete;
-    if (match_token(';')) {
+    if (match_token(TOKEN_SEMICOLON)) {
         is_incomplete = true;
     } else {
         block = parse_stmt_block();
@@ -565,18 +565,18 @@ Decl *parse_decl_func(){
 
 Decl *parse_decl_var(){
 	const char *name = parse_name();
-
-    if (match_token('=')) {
+	
+    if (match_token(TOKEN_ASSIGN)) {
         Expr *expr = parse_expr();
-        expect_token(';');
+        expect_token(TOKEN_SEMICOLON);
         return decl_var(name, NULL, expr);
-    } else if (match_token(':')) {
+    } else if (match_token(TOKEN_COLON)) {
         TypeSpec *type = parse_type();
         Expr *expr = NULL;
-        if (match_token('=')) {
+        if (match_token(TOKEN_ASSIGN)) {
             expr = parse_expr();
         }
-        expect_token(';');
+        expect_token(TOKEN_SEMICOLON);
         return decl_var(name, type, expr);
     } else {
         syntax_error("Expected : or = after var, got %s", token.name);

@@ -4,6 +4,6 @@ project(Ceno_Script)
 set(CMAKE_CXX_STANDARD 11)
 
 set(SOURCE_FILES
-        src/main.c)
+        src/ceno_script.c)
 
 add_executable(Ceno_Script ${SOURCE_FILES})

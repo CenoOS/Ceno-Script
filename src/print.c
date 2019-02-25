@@ -1,4 +1,9 @@
+#ifndef __CENO_SCRIPT_PRINT__
+#define __CENO_SCRIPT_PRINT__
 
+
+void print_stmt_block(StmtBlock block);
+void print_stmt(Stmt *stmt);
 
 void print_typespec(TypeSpec *type){
 	switch(type->kind){
@@ -357,3 +362,6 @@ void print_stmt(Stmt *stmt){
             break;
     }
 }
+
+
+#endif // !__CENO_SCRIPT_PRINT__
